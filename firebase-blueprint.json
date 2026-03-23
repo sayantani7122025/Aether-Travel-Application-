@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "Trip": {
+      "title": "Trip",
+      "description": "A travel itinerary planned by the user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the trip." },
+        "destination": { "type": "string", "description": "The travel destination." },
+        "startDate": { "type": "string", "format": "date", "description": "The start date of the trip." },
+        "duration": { "type": "integer", "description": "The duration of the trip in days." },
+        "vibe": { "type": "string", "enum": ["Chill", "Adventure", "Social", "Food", "Culture", "Relaxation"], "description": "The vibe of the trip." },
+        "budget": { "type": "string", "enum": ["Economic", "Standard", "Luxury"], "description": "The budget tier of the trip." },
+        "currency": { "type": "string", "description": "The currency for estimated costs." },
+        "itinerary": { "type": "array", "description": "The day-wise itinerary." },
+        "packingList": { "type": "array", "description": "The list of items to pack." },
+        "weather": { "type": "object", "description": "Weather information for the destination." },
+        "tips": { "type": "array", "items": { "type": "string" }, "description": "Travel tips for the destination." },
+        "essentials": { "type": "array", "items": { "type": "string" }, "description": "Essential items to carry." },
+        "transportation": {
+          "type": "object",
+          "properties": {
+            "airports": { "type": "array" },
+            "trainStations": { "type": "array" },
+            "howToReach": { "type": "string" },
+            "flights": { "type": "array" },
+            "trains": { "type": "array" }
+          }
+        },
+        "hotels": { "type": "array" },
+        "createdAt": { "type": "integer", "description": "The timestamp when the trip was created." },
+        "uid": { "type": "string", "description": "The user ID of the trip owner." }
+      },
+      "required": ["id", "destination", "startDate", "duration", "vibe", "budget", "currency", "itinerary", "uid"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Information about the user.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user ID." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "photoURL": { "type": "string", "description": "The user's photo URL." },
+        "location": { "type": "string", "description": "The user's home location." },
+        "username": { "type": "string", "description": "The user's username." },
+        "password": { "type": "string", "description": "The user's password." },
+        "createdAt": { "type": "integer", "description": "The timestamp when the profile was created." }
+      },
+      "required": ["uid", "email"]
+    },
+    "Blog": {
+      "title": "Blog",
+      "description": "A travel blog post or memory shared by the user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the blog post." },
+        "title": { "type": "string", "description": "The title of the blog post." },
+        "content": { "type": "string", "description": "The content of the blog post." },
+        "destination": { "type": "string", "description": "The travel destination related to the blog." },
+        "imageUrl": { "type": "string", "description": "An image URL for the blog post." },
+        "createdAt": { "type": "integer", "description": "The timestamp when the blog was created." },
+        "uid": { "type": "string", "description": "The user ID of the blog author." }
+      },
+      "required": ["id", "title", "content", "uid"]
+    }
+  },
+  "firestore": {
+    "/trips/{tripId}": {
+      "schema": "Trip",
+      "description": "Collection of all trips planned by users."
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Collection of user profiles."
+    },
+    "/blogs/{blogId}": {
+      "schema": "Blog",
+      "description": "Collection of travel blogs and memories."
+    }
+  }
+}

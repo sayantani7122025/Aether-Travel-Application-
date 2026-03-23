@@ -1,0 +1,5 @@
+{
+  "name": "Aether Travel",
+  "description": "A premium, AI-powered minimalist travel planner focused on simplicity and elegance.",
+  "requestFramePermissions": ["geolocation"]
+}

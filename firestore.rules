@@ -1,0 +1,124 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: trips
+    // Document ID: auto-generated
+    // Fields:
+    //   - id: string (required) - unique identifier
+    //   - destination: string (required) - travel destination
+    //   - startDate: string (required) - start date
+    //   - duration: number (required) - duration in days
+    //   - vibe: string (required) - trip vibe
+    //   - budget: string (required) - budget tier
+    //   - currency: string (required) - currency
+    //   - itinerary: list (required) - day-wise itinerary
+    //   - packingList: list (optional) - list of items
+    //   - weather: map (optional) - weather info
+    //   - tips: list (optional) - travel tips
+    //   - essentials: list (optional) - essential items
+    //   - createdAt: int (required) - timestamp
+    //   - uid: string (required) - owner's user ID
+    //
+    // Collection: users
+    // Document ID: user's UID
+    // Fields:
+    //   - uid: string (required) - user ID
+    //   - email: string (required) - user's email
+    //   - displayName: string (optional) - user's display name
+    //   - photoURL: string (optional) - user's photo URL
+    //   - createdAt: int (required) - timestamp
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}$");
+    }
+
+    function isValidTrip(data) {
+      return hasRequiredFields(['id', 'destination', 'startDate', 'duration', 'vibe', 'budget', 'currency', 'itinerary', 'uid', 'createdAt', 'transportation', 'hotels']) &&
+             data.id is string && data.id.size() > 0 && data.id.size() < 100 &&
+             data.destination is string && data.destination.size() > 0 && data.destination.size() < 200 &&
+             isValidDateString(data.startDate) &&
+             data.duration is int && data.duration > 0 && data.duration <= 30 &&
+             data.vibe in ['Chill', 'Adventure', 'Social', 'Food', 'Culture', 'Relaxation'] &&
+             data.budget in ['Economic', 'Standard', 'Luxury'] &&
+             data.currency is string && data.currency.size() == 3 &&
+             data.itinerary is list && data.itinerary.size() <= 30 &&
+             data.uid is string && data.uid == request.auth.uid &&
+             data.createdAt is int &&
+             data.transportation is map &&
+             data.hotels is list;
+    }
+
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'email', 'createdAt']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             isValidEmail(data.email) &&
+             data.createdAt is int &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() < 1000));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /trips/{tripId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && isValidTrip(request.resource.data);
+      allow update: if isDocOwner() && isValidTrip(request.resource.data) && uidNotModified();
+      allow delete: if isDocOwner();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
